@@ -96,9 +96,11 @@ static void rotate_chars(char* message, uint8_t window_length, uint8_t offset, c
 
     strncpy(output, message + offset, first_part_length);
 
-    for (uint8_t i = 0; i < window_length - first_part_length; i++) {
-        strncpy(output + first_part_length + i, " ", 1);
+    for (uint8_t i = first_part_length; i < window_length; i++) {
+        output[i] = ' ';
     }
+
+    output[window_length] = '\0';
 }
 
 static void show_message(casiopeia_state_t *state) {
@@ -126,7 +128,7 @@ static bool update_offset(casiopeia_state_t *state) {
 static bool update_message_index(casiopeia_state_t *state) {
     watch_date_time current_date_time = watch_rtc_get_date_time();
 
-    if (current_date_time.unit.minute != state->last_index_update_minute && current_date_time.unit.minute % 2 == 0) {
+    if (current_date_time.unit.minute != state->last_index_update_minute && current_date_time.unit.minute % 15 == 0) {
         state->last_index_update_minute = current_date_time.unit.minute;
         state->current_message_offset = 0;
         // Emulator: use rand. Hardware: use arc4random.
@@ -190,14 +192,18 @@ bool casiopeia_face_loop(movement_event_t event, movement_settings_t *settings, 
             // Your watch face will receive this event after a period of inactivity. If it makes sense to resign,
             // you may uncomment this line to move back to the first watch face in the list:
             // movement_move_to_face(0);
-            state->current_message_offset = 0;
-            update_display = true;
             break;
         case EVENT_LOW_ENERGY_UPDATE:
             // If you did not resign in EVENT_TIMEOUT, you can use this event to update the display once a minute.
             // Avoid displaying fast-updating values like seconds, since the display won't update again for 60 seconds.
             // You should also consider starting the tick animation, to show the wearer that this is sleep mode:
             // watch_start_tick_animation(500);
+            
+            if (state->current_message_offset != 0) {
+                state->current_message_offset = 0;
+                update_display = true;
+            }
+
             update_display = update_display || update_message_index(state);
             break;
         default:
