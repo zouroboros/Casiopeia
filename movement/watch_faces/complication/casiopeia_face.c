@@ -92,7 +92,11 @@ uint8_t number_of_messages = 60;
 static void rotate_chars(char* message, uint8_t window_length, uint8_t offset, char* output) {
     uint8_t message_length = strlen(message);
 
-    uint8_t first_part_length = message_length - offset;
+    uint8_t first_part_length = window_length;
+
+    if (message_length - offset < window_length) {
+        first_part_length = message_length - offset;
+    }
 
     strncpy(output, message + offset, first_part_length);
 
